@@ -7,6 +7,8 @@ import com.zzpublic.zwing.View;
 import core.Repository;
 import core.TodoItem;
 import core.TodoList;
+import persistence.Persistence;
+import persistence.PersistenceText;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -15,6 +17,8 @@ import java.util.LinkedList;
 
 public class MainView extends View {
     private TodoList list;
+
+    private Persistence persistence = new PersistenceText();
 
     private final static int paddingNormal = 10;
     private final static int paddingSmall = 5;
@@ -45,24 +49,10 @@ public class MainView extends View {
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         this.add(titleLabel);
 
-        containerView = new View();
-        containerView.setLocation(0, titleLabel.getY() + titleLabel.getHeight() + paddingNormal);
-        containerView.setSize(this.getWidth(), this.getHeight() - containerView.getY() - paddingNormal - panelHeight);
-        this.add(containerView);
-
-        int y = titleLabel.getY() + titleLabel.getHeight() + paddingNormal;
-        for (TodoItem todoItem: list.getItems()){
-            Label label = new Label();
-            label.setText(todoItem.getText());
-            label.setLocation(paddingNormal, y);
-            label.setSize(this.getWidth()-2 * paddingNormal, cellHeight);
-            containerView.add(label);
-            y += label.getHeight() + paddingNormal;
-        }
 
         View inputView = new View();
         inputView.setSize(this.getWidth(),panelHeight);
-        inputView.setLocation(0,this.getHeight()-inputView.getHeight()-124);
+        inputView.setLocation(0,this.getHeight()-inputView.getHeight()-30);
         this.add(inputView);
 
         addButton = new Button("add");
@@ -77,7 +67,7 @@ public class MainView extends View {
     }
 
     @Override
-    protected void initEvents(){
+    protected void initEvents() {
         super.initEvents();
 
         addButton.addActionListener(new ActionListener() {
@@ -90,10 +80,43 @@ public class MainView extends View {
                 list.add(todoItem);
                 //sync UI
                 MainView.this.remove(containerView);
+
                 //add 4 label
+                dataToView();
                 //clean UI
                 textField.setText("");
+
+                //push data to disk
+                persistence.save(list);
             }
         });
+    }
+    @Override
+    protected void viewDidDisplay(){
+        super.viewDidDisplay();
+        dataToView();
+    }
+
+    public void dataToView(){
+        titleLabel.setText(list.getTitle());
+
+        if(containerView != null){
+            this.remove(containerView);
+        }
+
+        containerView = new View();
+        containerView.setLocation(0, titleLabel.getY() + titleLabel.getHeight() + paddingNormal);
+        containerView.setSize(this.getWidth(), this.getHeight() - containerView.getY() - paddingNormal - panelHeight);
+        this.add(containerView);
+
+        int y = titleLabel.getY() + titleLabel.getHeight() + paddingNormal;
+        for (TodoItem todoItem: list.getItems()){
+            Label label = new Label();
+            label.setText(todoItem.getText());
+            label.setLocation(paddingNormal, y);
+            label.setSize(this.getWidth()-2 * paddingNormal, cellHeight);
+            containerView.add(label);
+            y += label.getHeight() + paddingNormal;
+        }
     }
 }
